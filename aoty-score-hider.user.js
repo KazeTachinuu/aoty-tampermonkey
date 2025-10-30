@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Score Hider
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      2.0
 // @description  Toggle visibility of scores on Album of the Year
 // @author       You
 // @match        https://www.albumoftheyear.org/*
@@ -11,16 +11,9 @@
 // @run-at       document-end
 // ==/UserScript==
 
-// Focused on hiding ONLY score numbers, not entire sections or reviews
-// Hides: album scores, track ratings, user scores, must-hear badges
-
 (function() {
     'use strict';
 
-    // Get saved state or default to false (scores visible)
-    let scoresHidden = GM_getValue('scoresHidden', false);
-
-    // Only target actual score display elements
     const SCORE_SELECTORS = [
         '.albumUserScoreBox',
         '.albumCriticScoreBox',
@@ -28,102 +21,98 @@
         '.albumReviewText',
         '.dist',
         '.distEnd',
-        '.rating',                // Rating displays
-        '.ratingBar',             // Rating bar graphs
-        '.scoreValue',            // Score numbers on list/chart pages
-        '.scoreValueContainer',   // Score bar containers on list/chart pages
-        '.albumReviewRatingBar',  // Album review rating bars
-        '.albumCriticScore',      // Album critic score
-        '.albumUserScore',        // Album user score
-        '.artistCriticScore',     // Artist critic score
-        '.artistUserScore',       // Artist user score
-        '.trackRating',           // Track rating numbers
-        '.mustHearButton',        // Must-hear badge
-        '.songScore',             // Song page main score number
-        '.songScoreBox',          // Song page score box
-        '.songRatings .cell.score', // User rating scores in lists
-        '.albumReviewRating'      // Review rating numbers
+        '.rating',
+        '.ratingBar',
+        '.scoreValue',
+        '.scoreValueContainer',
+        '.albumReviewRatingBar',
+        '.albumCriticScore',
+        '.albumUserScore',
+        '.artistCriticScore',
+        '.artistUserScore',
+        '.trackRating',
+        '.mustHearButton',
+        '.songScore',
+        '.songScoreBox',
+        '.songRatings .cell.score',
+        '.albumReviewRating'
     ];
 
-    // Create toggle button
-    const button = document.createElement('button');
-    button.textContent = scoresHidden ? 'Show Scores' : 'Hide Scores';
-    button.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        padding: 10px 15px;
-        background-color: ${scoresHidden ? '#dc3545' : '#28a745'};
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: bold;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-    `;
+    let isHidden = GM_getValue('scoresHidden', false);
 
-    button.addEventListener('mouseenter', function() {
-        this.style.transform = 'scale(1.05)';
-    });
+    function addStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .aoty-toggle-btn {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                padding: 10px 15px;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                transition: all 0.3s ease;
+            }
+            .aoty-toggle-btn:hover {
+                transform: scale(1.05);
+            }
+            .aoty-toggle-btn.hidden {
+                background-color: #dc3545;
+            }
+            .aoty-toggle-btn.visible {
+                background-color: #28a745;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
-    button.addEventListener('mouseleave', function() {
-        this.style.transform = 'scale(1)';
-    });
+    function createButton() {
+        const button = document.createElement('button');
+        button.className = `aoty-toggle-btn ${isHidden ? 'hidden' : 'visible'}`;
+        button.textContent = isHidden ? 'Show Scores' : 'Hide Scores';
+        button.addEventListener('click', handleToggle);
+        return button;
+    }
 
-    // Simple hide/unhide function
-    function toggleScores() {
-        let totalElementsFound = 0;
-
-        // Hide/show only score elements
+    function updateScoreVisibility() {
+        const display = isHidden ? 'none' : '';
         SCORE_SELECTORS.forEach(selector => {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach(el => {
-                el.style.display = scoresHidden ? 'none' : '';
-            });
-            totalElementsFound += elements.length;
+            document.querySelectorAll(selector).forEach(el => el.style.display = display);
         });
-
-        console.log(`[AOTY Score Hider] ${scoresHidden ? 'HIDDEN' : 'VISIBLE'} - ${totalElementsFound} score elements`);
     }
 
-    // Toggle button click handler
-    button.addEventListener('click', function() {
-        scoresHidden = !scoresHidden;
-        GM_setValue('scoresHidden', scoresHidden);
+    function handleToggle() {
+        isHidden = !isHidden;
+        GM_setValue('scoresHidden', isHidden);
 
-        button.textContent = scoresHidden ? 'Show Scores' : 'Hide Scores';
-        button.style.backgroundColor = scoresHidden ? '#dc3545' : '#28a745';
+        const button = document.querySelector('.aoty-toggle-btn');
+        button.textContent = isHidden ? 'Show Scores' : 'Hide Scores';
+        button.className = `aoty-toggle-btn ${isHidden ? 'hidden' : 'visible'}`;
 
-        toggleScores();
-    });
+        updateScoreVisibility();
+    }
 
-    // Wait for page to be fully loaded
     function init() {
-        document.body.appendChild(button);
-        toggleScores();
-        console.log('[AOTY Score Hider] v1.3 initialized');
+        addStyles();
+        document.body.appendChild(createButton());
+        updateScoreVisibility();
     }
 
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
     }
 
-    // Watch for dynamically loaded content (simple throttle)
     let timeout;
-    const observer = new MutationObserver(function() {
+    new MutationObserver(() => {
         clearTimeout(timeout);
-        timeout = setTimeout(toggleScores, 100);
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
+        timeout = setTimeout(updateScoreVisibility, 100);
+    }).observe(document.body, { childList: true, subtree: true });
 
 })();
