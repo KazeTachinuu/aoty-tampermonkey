@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.8
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/user/*
@@ -150,53 +150,29 @@
             const info = JSON.parse(data);
             localStorage.removeItem(CONFIG.STORAGE_KEY);
 
-            if (Date.now() - info.timestamp > CONFIG.BANNER_TIMEOUT) return;
-            if (!info.rating) return;
+            if (Date.now() - info.timestamp > CONFIG.BANNER_TIMEOUT || !info.rating) return;
 
             const colorClass = getColorClass(info.rating);
-
             const banner = document.createElement('div');
             banner.className = 'aoty-random-banner';
+            banner.innerHTML = `
+                <div class="aoty-random-banner-content">
+                    <span class="aoty-random-banner-label">Random pick from ${info.username}'s ratings:</span>
+                    <div class="aoty-random-banner-rating">
+                        <span class="rating">${info.rating}</span>
+                        <div class="ratingBar ${colorClass}">
+                            <div class="${colorClass}" style="width:${info.rating}%"></div>
+                        </div>
+                    </div>
+                    <button class="aoty-random-banner-close">&times;</button>
+                </div>
+            `;
 
-            const content = document.createElement('div');
-            content.className = 'aoty-random-banner-content';
-
-            const label = document.createElement('span');
-            label.className = 'aoty-random-banner-label';
-            label.textContent = `Random pick from ${info.username}'s ratings:`;
-
-            const ratingDiv = document.createElement('div');
-            ratingDiv.className = 'aoty-random-banner-rating';
-
-            const ratingSpan = document.createElement('span');
-            ratingSpan.className = 'rating';
-            ratingSpan.textContent = info.rating;
-
-            const ratingBar = document.createElement('div');
-            ratingBar.className = `ratingBar ${colorClass}`;
-            const ratingBarFill = document.createElement('div');
-            ratingBarFill.className = colorClass;
-            ratingBarFill.style.width = `${info.rating}%`;
-            ratingBar.appendChild(ratingBarFill);
-
-            ratingDiv.appendChild(ratingSpan);
-            ratingDiv.appendChild(ratingBar);
-
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'aoty-random-banner-close';
-            closeBtn.innerHTML = '&times;';
-            closeBtn.addEventListener('click', () => dismissBanner(banner));
-
-            content.appendChild(label);
-            content.appendChild(ratingDiv);
-            content.appendChild(closeBtn);
-            banner.appendChild(content);
-
+            banner.querySelector('button').addEventListener('click', () => dismissBanner(banner));
             document.body.appendChild(banner);
 
             setTimeout(() => banner.classList.add('visible'), 10);
             setTimeout(() => dismissBanner(banner), CONFIG.BANNER_AUTO_DISMISS);
-
         } catch (error) {
             console.error('Error showing banner:', error);
         }
@@ -214,18 +190,29 @@
         const style = document.createElement('style');
         style.id = 'aoty-random-styles';
         style.textContent = `
-            .aoty-random-link {
-                display: inline-block;
+            .aoty-random-banner {
+                --bg: #fff;
+                --border: rgba(54, 57, 63, 0.2);
+                --text: #36393f;
+                --bar-bg: rgba(54, 57, 63, 0.1);
+                --close: #999;
+                --close-hover: #36393f;
             }
-            .aoty-random-link div {
-                cursor: pointer;
+            body.dark .aoty-random-banner {
+                --bg: rgb(47, 49, 54);
+                --border: rgba(185, 187, 190, 0.2);
+                --text: rgb(185, 187, 190);
+                --bar-bg: rgba(185, 187, 190, 0.2);
+                --close-hover: rgb(220, 221, 222);
             }
+            .aoty-random-link { text-decoration: none; }
+            .aoty-random-link div { cursor: pointer; }
             .aoty-random-banner {
                 position: fixed;
                 top: 80px;
                 right: 20px;
-                background: #fff;
-                border: 1px solid rgba(54, 57, 63, 0.2);
+                background: var(--bg);
+                border: 1px solid var(--border);
                 border-radius: 3px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
                 z-index: 10000;
@@ -233,81 +220,19 @@
                 transform: translateX(400px);
                 transition: all 0.3s ease;
             }
-            .aoty-random-banner.visible {
-                opacity: 1;
-                transform: translateX(0);
-            }
-            body.dark .aoty-random-banner {
-                background: rgb(47, 49, 54);
-                border-color: rgba(185, 187, 190, 0.2);
-            }
-            .aoty-random-banner-content {
-                padding: 15px 20px;
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
-            .aoty-random-banner-label {
-                font-size: 13px;
-                color: #36393f;
-            }
-            body.dark .aoty-random-banner-label {
-                color: rgb(185, 187, 190);
-            }
-            .aoty-random-banner-rating {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .aoty-random-banner-rating .rating {
-                font-size: 24px;
-                font-weight: bold;
-                min-width: 40px;
-            }
-            .aoty-random-banner-rating .ratingBar {
-                width: 100px;
-                height: 8px;
-                background: rgba(54, 57, 63, 0.1);
-                border-radius: 4px;
-                overflow: hidden;
-            }
-            body.dark .aoty-random-banner-rating .ratingBar {
-                background: rgba(185, 187, 190, 0.2);
-            }
-            .aoty-random-banner-rating .ratingBar div {
-                height: 100%;
-            }
-            .aoty-random-banner-rating .ratingBar .green {
-                background: #86E27D;
-            }
-            .aoty-random-banner-rating .ratingBar .yellow {
-                background: #E5C76D;
-            }
-            .aoty-random-banner-rating .ratingBar .red {
-                background: #E07D70;
-            }
-            .aoty-random-banner-close {
-                background: none;
-                border: none;
-                font-size: 24px;
-                color: #999;
-                cursor: pointer;
-                padding: 0;
-                margin-left: 10px;
-                line-height: 1;
-            }
-            .aoty-random-banner-close:hover {
-                color: #36393f;
-            }
-            body.dark .aoty-random-banner-close:hover {
-                color: rgb(220, 221, 222);
-            }
-            @media (max-width: 768px) {
-                .aoty-random-banner {
-                    right: 10px;
-                    left: 10px;
-                }
-            }
+            .aoty-random-banner.visible { opacity: 1; transform: translateX(0); }
+            .aoty-random-banner-content { padding: 15px 20px; display: flex; align-items: center; gap: 15px; }
+            .aoty-random-banner-label { font-size: 13px; color: var(--text); }
+            .aoty-random-banner-rating { display: flex; align-items: center; gap: 10px; }
+            .aoty-random-banner-rating .rating { font-size: 24px; font-weight: bold; min-width: 40px; }
+            .aoty-random-banner-rating .ratingBar { width: 100px; height: 8px; background: var(--bar-bg); border-radius: 4px; overflow: hidden; }
+            .aoty-random-banner-rating .ratingBar div { height: 100%; }
+            .aoty-random-banner-rating .ratingBar .green { background: #86E27D; }
+            .aoty-random-banner-rating .ratingBar .yellow { background: #E5C76D; }
+            .aoty-random-banner-rating .ratingBar .red { background: #E07D70; }
+            .aoty-random-banner-close { background: none; border: none; font-size: 24px; color: var(--close); cursor: pointer; padding: 0; margin-left: 10px; line-height: 1; }
+            .aoty-random-banner-close:hover { color: var(--close-hover); }
+            @media (max-width: 768px) { .aoty-random-banner { right: 10px; left: 10px; } }
         `;
         document.head.appendChild(style);
     }
