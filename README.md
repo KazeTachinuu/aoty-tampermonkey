@@ -1,6 +1,6 @@
 # AOTY Tampermonkey Scripts
 
-Professional userscripts enhancing [Album of the Year](https://www.albumoftheyear.org/) functionality.
+Userscripts enhancing [Album of the Year](https://www.albumoftheyear.org/) functionality.
 
 ## Scripts
 
