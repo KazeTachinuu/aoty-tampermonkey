@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      2.1
 // @description  Toggle visibility of scores on Album of the Year
-// @author       You
+// @author       Hugo Sibony
 // @match        https://www.albumoftheyear.org/*
 // @match        https://albumoftheyear.org/*
 // @grant        GM_setValue

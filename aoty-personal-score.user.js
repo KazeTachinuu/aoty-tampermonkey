@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      2.0
 // @description  Display your personal ratings on artist/list pages
-// @author       You
+// @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/
 // @match        https://*.albumoftheyear.org/artist/*
 // @match        https://*.albumoftheyear.org/genre/*

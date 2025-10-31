@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      2.3
 // @description  Analyze AOTY pages to understand structure and find user ratings
-// @author       You
+// @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/*
 // @grant        none
 // @run-at       document-end

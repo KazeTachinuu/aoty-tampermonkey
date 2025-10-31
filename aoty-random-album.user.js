@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.2
 // @description  Pick a random album from any user's rated albums on AOTY
-// @author       You
+// @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/user/*
 // @match        https://*.albumoftheyear.org/album/*
 // @grant        none
