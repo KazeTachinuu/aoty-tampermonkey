@@ -134,7 +134,7 @@
         link.className = 'aoty-random-link';
 
         const div = document.createElement('div');
-        div.textContent = 'Random';
+        div.textContent = 'Surprise Me';
 
         link.appendChild(div);
         link.addEventListener('click', handleRandomClick);
