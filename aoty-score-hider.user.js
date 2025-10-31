@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Score Hider
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Toggle visibility of scores on Album of the Year
 // @author       You
 // @match        https://www.albumoftheyear.org/*
@@ -17,6 +17,7 @@
     const SCORE_SELECTORS = [
         '.albumUserScoreBox',
         '.albumCriticScoreBox',
+        '.albumListScoreContainer',
         '.ratingRowContainer',
         '.albumReviewText',
         '.dist',
@@ -25,6 +26,7 @@
         '.ratingBar',
         '.scoreValue',
         '.scoreValueContainer',
+        '.scoreHeader',
         '.albumReviewRatingBar',
         '.albumCriticScore',
         '.albumUserScore',
@@ -40,14 +42,32 @@
 
     let isHidden = GM_getValue('scoresHidden', false);
 
+    function getOrCreateContainer() {
+        let container = document.querySelector('.aoty-scripts-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'aoty-scripts-container';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
     function addStyles() {
+        if (document.querySelector('#aoty-shared-styles')) return;
+
         const style = document.createElement('style');
+        style.id = 'aoty-shared-styles';
         style.textContent = `
-            .aoty-toggle-btn {
+            .aoty-scripts-container {
                 position: fixed;
                 top: 20px;
                 right: 20px;
                 z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .aoty-btn {
                 padding: 10px 15px;
                 color: white;
                 border: none;
@@ -57,14 +77,15 @@
                 font-weight: bold;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.2);
                 transition: all 0.3s ease;
+                white-space: nowrap;
             }
-            .aoty-toggle-btn:hover {
+            .aoty-btn:hover {
                 transform: scale(1.05);
             }
-            .aoty-toggle-btn.hidden {
+            .aoty-btn.hidden {
                 background-color: #dc3545;
             }
-            .aoty-toggle-btn.visible {
+            .aoty-btn.visible {
                 background-color: #28a745;
             }
         `;
@@ -73,7 +94,7 @@
 
     function createButton() {
         const button = document.createElement('button');
-        button.className = `aoty-toggle-btn ${isHidden ? 'hidden' : 'visible'}`;
+        button.className = `aoty-btn ${isHidden ? 'hidden' : 'visible'}`;
         button.textContent = isHidden ? 'Show Scores' : 'Hide Scores';
         button.addEventListener('click', handleToggle);
         return button;
@@ -86,20 +107,19 @@
         });
     }
 
-    function handleToggle() {
+    function handleToggle(event) {
         isHidden = !isHidden;
         GM_setValue('scoresHidden', isHidden);
 
-        const button = document.querySelector('.aoty-toggle-btn');
-        button.textContent = isHidden ? 'Show Scores' : 'Hide Scores';
-        button.className = `aoty-toggle-btn ${isHidden ? 'hidden' : 'visible'}`;
+        event.target.textContent = isHidden ? 'Show Scores' : 'Hide Scores';
+        event.target.className = `aoty-btn ${isHidden ? 'hidden' : 'visible'}`;
 
         updateScoreVisibility();
     }
 
     function init() {
         addStyles();
-        document.body.appendChild(createButton());
+        getOrCreateContainer().appendChild(createButton());
         updateScoreVisibility();
     }
 
