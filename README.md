@@ -4,43 +4,25 @@ Userscripts for [Album of the Year](https://www.albumoftheyear.org/).
 
 ## Scripts
 
-```mermaid
-graph LR
-    subgraph Scripts
-        SH[Score Hider]
-        PS[Personal Score]
-        RAP[Random Picker]
-    end
-
-    subgraph AOTY
-        List[List Pages]
-        Album[Album Pages]
-        User[User Profiles]
-    end
-
-    SH -->|Toggle visibility| List & Album
-    PS -->|Fetch & display ratings| List
-    RAP -->|Random selection| User
-    RAP -->|Navigate| Album
-
-    style SH fill:#dc3545,color:#fff
-    style PS fill:#28a745,color:#fff
-    style RAP fill:#007bff,color:#fff
-```
-
-| Script | File | Purpose |
-|--------|------|---------|
-| **Score Hider** | `aoty-score-hider.user.js` | Toggle all score visibility with persistent state |
-| **Personal Score** | `aoty-personal-score.user.js` | Display your ratings on list pages without visiting albums |
-| **Random Picker** | `aoty-random-album.user.js` | Select random albums from any user's ratings |
+| Script | Version | File | Purpose |
+|--------|---------|------|---------|
+| **Score Hider** | 2.6 | `aoty-score-hider.user.js` | Toggle all score visibility with persistent state |
+| **Personal Score** | 2.2 | `aoty-personal-score.user.js` | Display your ratings on list pages without visiting albums |
+| **Random Picker** | 1.4 | `aoty-random-album.user.js` | Select random albums from any user's ratings |
 
 ## Installation
 
 **Prerequisites:** [Tampermonkey](https://www.tampermonkey.net/) extension
 
-**Install:** Open any `.user.js` file in your browser - Tampermonkey will automatically detect and install it.
+**Install from GitHub (recommended):**
+Click any raw `.user.js` file link below - Tampermonkey will auto-install with update support:
+- [Score Hider](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js)
+- [Personal Score](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-personal-score.user.js)
+- [Random Picker](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js)
 
-Alternative: Drag `.user.js` files into browser, or manually create new script in Tampermonkey and paste contents.
+Scripts will auto-update daily when new versions are pushed to GitHub.
+
+**Alternative:** Drag `.user.js` files into browser, or manually paste into Tampermonkey editor.
 
 ---
 
@@ -54,12 +36,13 @@ Toggle button in top-right corner to hide/show all ratings across AOTY.
 - Hides: critic/user scores, track ratings, rating bars, must-hear badges
 
 **Usage:**
-- **Red button** = Scores hidden
-- **Green button** = Scores visible
+- **Green border** = Scores visible
+- **Red border** = Scores hidden
 
 **Implementation:**
-- 40+ CSS selectors target all score elements
+- CONFIG-based architecture with 20+ CSS selectors
 - Debounced MutationObserver (100ms) handles dynamic content
+- AOTY-native design system integration
 - CSS `display: none` for instant toggle
 
 ---
@@ -141,7 +124,7 @@ new MutationObserver(() => {
 ## Development
 
 **Extend Score Hider selectors:**
-Add to `SCORE_SELECTORS` array (`aoty-score-hider.user.js:17-41`)
+Add to `CONFIG.SELECTORS` array in `aoty-score-hider.user.js`
 
 **Test pages:**
 - Homepage: `/`

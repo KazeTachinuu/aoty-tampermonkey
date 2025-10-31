@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.4
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/user/*
 // @match        https://*.albumoftheyear.org/album/*
 // @grant        none
 // @run-at       document-end
+// @updateURL    https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js
+// @downloadURL  https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js
 // ==/UserScript==
 
 (function() {
@@ -17,31 +19,20 @@
         MAX_PAGES: 100,
         BANNER_TIMEOUT: 10000,
         BANNER_AUTO_DISMISS: 8000,
-        STORAGE_KEY: 'aoty_random_pick'
+        STORAGE_KEY: 'aoty_random_pick',
+        COLOR_THRESHOLDS: { GREEN: 75, YELLOW: 60 }
     };
 
-    // Utility functions
-    function isUserProfilePage() {
-        return /^\/user\/[^\/]+/.test(window.location.pathname);
-    }
+    const isUserProfilePage = () => /^\/user\/[^\/]+/.test(window.location.pathname);
+    const isAlbumPage = () => /^\/album\//.test(window.location.pathname);
+    const getUsernameFromUrl = () => window.location.pathname.match(/^\/user\/([^\/]+)/)?.[1] || null;
 
-    function isAlbumPage() {
-        return /^\/album\//.test(window.location.pathname);
-    }
-
-    function getUsernameFromUrl() {
-        const match = window.location.pathname.match(/^\/user\/([^\/]+)/);
-        return match ? match[1] : null;
-    }
-
-    function getColorClass(rating) {
+    const getColorClass = rating => {
         const r = parseInt(rating);
-        if (r >= 75) return 'green';
-        if (r >= 60) return 'yellow';
-        return 'red';
-    }
+        return r >= CONFIG.COLOR_THRESHOLDS.GREEN ? 'green' :
+               r >= CONFIG.COLOR_THRESHOLDS.YELLOW ? 'yellow' : 'red';
+    };
 
-    // Album fetching
     function extractAlbumsFromDoc(doc, seen) {
         const albums = [];
 
@@ -105,7 +96,6 @@
         return allAlbums;
     }
 
-    // Random album picker
     async function handleRandomClick(e) {
         e.preventDefault();
 
@@ -152,7 +142,6 @@
         return link;
     }
 
-    // Rating banner
     function showRatingBanner() {
         const data = localStorage.getItem(CONFIG.STORAGE_KEY);
         if (!data) return;
@@ -219,9 +208,11 @@
         setTimeout(() => banner.remove(), 300);
     }
 
-    // Styles
     function addStyles() {
+        if (document.querySelector('#aoty-random-styles')) return;
+
         const style = document.createElement('style');
+        style.id = 'aoty-random-styles';
         style.textContent = `
             .aoty-random-link {
                 display: inline-block;
@@ -233,11 +224,11 @@
                 position: fixed;
                 top: 80px;
                 right: 20px;
-                background: white;
-                border: 1px solid #e0e0e0;
-                border-radius: 6px;
+                background: #fff;
+                border: 1px solid rgba(54, 57, 63, 0.2);
+                border-radius: 3px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                z-index: 9999;
+                z-index: 10000;
                 opacity: 0;
                 transform: translateX(400px);
                 transition: all 0.3s ease;
@@ -247,8 +238,8 @@
                 transform: translateX(0);
             }
             body.dark .aoty-random-banner {
-                background: #2a2a2a;
-                border-color: #444;
+                background: rgb(47, 49, 54);
+                border-color: rgba(185, 187, 190, 0.2);
             }
             .aoty-random-banner-content {
                 padding: 15px 20px;
@@ -257,11 +248,11 @@
                 gap: 15px;
             }
             .aoty-random-banner-label {
-                font-size: 14px;
-                color: #666;
+                font-size: 13px;
+                color: #36393f;
             }
             body.dark .aoty-random-banner-label {
-                color: #999;
+                color: rgb(185, 187, 190);
             }
             .aoty-random-banner-rating {
                 display: flex;
@@ -276,12 +267,12 @@
             .aoty-random-banner-rating .ratingBar {
                 width: 100px;
                 height: 8px;
-                background: #e0e0e0;
+                background: rgba(54, 57, 63, 0.1);
                 border-radius: 4px;
                 overflow: hidden;
             }
             body.dark .aoty-random-banner-rating .ratingBar {
-                background: #444;
+                background: rgba(185, 187, 190, 0.2);
             }
             .aoty-random-banner-rating .ratingBar div {
                 height: 100%;
@@ -306,10 +297,10 @@
                 line-height: 1;
             }
             .aoty-random-banner-close:hover {
-                color: #333;
+                color: #36393f;
             }
             body.dark .aoty-random-banner-close:hover {
-                color: #fff;
+                color: rgb(220, 221, 222);
             }
             @media (max-width: 768px) {
                 .aoty-random-banner {
@@ -321,7 +312,6 @@
         document.head.appendChild(style);
     }
 
-    // Page initialization
     function initUserPage() {
         const profileNav = document.querySelector('.profileNav');
         if (profileNav) {

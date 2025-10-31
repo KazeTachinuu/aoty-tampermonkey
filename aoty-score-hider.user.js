@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Score Hider
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.6
 // @description  Toggle visibility of scores on Album of the Year
 // @author       Hugo Sibony
 // @match        https://www.albumoftheyear.org/*
@@ -9,36 +9,41 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @run-at       document-end
+// @updateURL    https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js
+// @downloadURL  https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    const SCORE_SELECTORS = [
-        '.albumUserScoreBox',
-        '.albumCriticScoreBox',
-        '.albumListScoreContainer',
-        '.ratingRowContainer',
-        '.albumReviewText',
-        '.dist',
-        '.distEnd',
-        '.rating',
-        '.ratingBar',
-        '.scoreValue',
-        '.scoreValueContainer',
-        '.scoreHeader',
-        '.albumReviewRatingBar',
-        '.albumCriticScore',
-        '.albumUserScore',
-        '.artistCriticScore',
-        '.artistUserScore',
-        '.trackRating',
-        '.mustHearButton',
-        '.songScore',
-        '.songScoreBox',
-        '.songRatings .cell.score',
-        '.albumReviewRating'
-    ];
+    const CONFIG = {
+        OBSERVER_DELAY: 100,
+        SELECTORS: [
+            '.albumUserScoreBox',
+            '.albumCriticScoreBox',
+            '.albumListScoreContainer',
+            '.ratingRowContainer',
+            '.albumReviewText',
+            '.dist',
+            '.distEnd',
+            '.rating',
+            '.ratingBar',
+            '.scoreValue',
+            '.scoreValueContainer',
+            '.scoreHeader',
+            '.albumReviewRatingBar',
+            '.albumCriticScore',
+            '.albumUserScore',
+            '.artistCriticScore',
+            '.artistUserScore',
+            '.trackRating',
+            '.mustHearButton',
+            '.songScore',
+            '.songScoreBox',
+            '.songRatings .cell.score',
+            '.albumReviewRating'
+        ]
+    };
 
     let isHidden = GM_getValue('scoresHidden', false);
 
@@ -65,28 +70,61 @@
                 z-index: 9999;
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px;
             }
             .aoty-btn {
-                padding: 10px 15px;
-                color: white;
-                border: none;
-                border-radius: 5px;
+                padding: 7px 12px;
+                font-family: "Open Sans", sans-serif;
+                font-size: 10.4px;
+                font-weight: 400;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
                 cursor: pointer;
-                font-size: 14px;
-                font-weight: bold;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                transition: all 0.3s ease;
+                border-radius: 3px;
+                transition: all 0.15s ease;
                 white-space: nowrap;
+                background: #fff;
+                color: #36393f;
+                border: 1px solid;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             }
             .aoty-btn:hover {
-                transform: scale(1.05);
+                background: #fafafa;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.12);
             }
-            .aoty-btn.hidden {
-                background-color: #dc3545;
+            .aoty-btn:active {
+                transform: translateY(1px);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             }
             .aoty-btn.visible {
-                background-color: #28a745;
+                border-color: #86E27D;
+            }
+            .aoty-btn.hidden {
+                border-color: #E07D70;
+            }
+            body.dark .aoty-btn {
+                background: rgb(47, 49, 54);
+                color: rgb(185, 187, 190);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            }
+            body.dark .aoty-btn:hover {
+                background: rgb(54, 57, 63);
+                color: rgb(220, 221, 222);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            }
+            body.dark .aoty-btn:active {
+                transform: translateY(1px);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            }
+            @media (max-width: 768px) {
+                .aoty-scripts-container {
+                    top: 10px;
+                    right: 10px;
+                }
+                .aoty-btn {
+                    font-size: 9.5px;
+                    padding: 6px 10px;
+                }
             }
         `;
         document.head.appendChild(style);
@@ -96,13 +134,14 @@
         const button = document.createElement('button');
         button.className = `aoty-btn ${isHidden ? 'hidden' : 'visible'}`;
         button.textContent = isHidden ? 'Show Scores' : 'Hide Scores';
+        button.title = isHidden ? 'Click to show all scores' : 'Click to hide all scores';
         button.addEventListener('click', handleToggle);
         return button;
     }
 
     function updateScoreVisibility() {
         const display = isHidden ? 'none' : '';
-        SCORE_SELECTORS.forEach(selector => {
+        CONFIG.SELECTORS.forEach(selector => {
             document.querySelectorAll(selector).forEach(el => el.style.display = display);
         });
     }
@@ -113,6 +152,7 @@
 
         event.target.textContent = isHidden ? 'Show Scores' : 'Hide Scores';
         event.target.className = `aoty-btn ${isHidden ? 'hidden' : 'visible'}`;
+        event.target.title = isHidden ? 'Click to show all scores' : 'Click to hide all scores';
 
         updateScoreVisibility();
     }
@@ -132,7 +172,7 @@
     let timeout;
     new MutationObserver(() => {
         clearTimeout(timeout);
-        timeout = setTimeout(updateScoreVisibility, 100);
+        timeout = setTimeout(updateScoreVisibility, CONFIG.OBSERVER_DELAY);
     }).observe(document.body, { childList: true, subtree: true });
 
 })();

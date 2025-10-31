@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Personal Score
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.2
 // @description  Display your personal ratings on artist/list pages
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/
@@ -15,13 +15,27 @@
 // @grant        GM_xmlhttpRequest
 // @run-at       document-end
 // @connect      albumoftheyear.org
+// @updateURL    https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-personal-score.user.js
+// @downloadURL  https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-personal-score.user.js
 // ==/UserScript==
 
 (function() {
     'use strict';
 
+    const CONFIG = {
+        BATCH_SIZE: 5,
+        BATCH_DELAY: 500,
+        OBSERVER_DELAY: 250,
+        COLOR_THRESHOLDS: { GREEN: 75, YELLOW: 60 }
+    };
+
     const cache = {};
-    const getColor = r => parseInt(r) >= 75 ? 'green' : parseInt(r) >= 60 ? 'yellow' : 'red';
+
+    const getColor = r => {
+        const rating = parseInt(r);
+        return rating >= CONFIG.COLOR_THRESHOLDS.GREEN ? 'green' :
+               rating >= CONFIG.COLOR_THRESHOLDS.YELLOW ? 'yellow' : 'red';
+    };
 
     function fetchRating(id) {
         if (cache[id] !== undefined) return Promise.resolve(cache[id]);
@@ -68,18 +82,28 @@
 
     async function processAll() {
         const blocks = document.querySelectorAll('.albumBlock, .albumListRow');
-        for (let i = 0; i < blocks.length; i += 5) {
-            await Promise.all([...blocks].slice(i, i + 5).map(inject));
-            if (i + 5 < blocks.length) await new Promise(r => setTimeout(r, 500));
+        for (let i = 0; i < blocks.length; i += CONFIG.BATCH_SIZE) {
+            await Promise.all([...blocks].slice(i, i + CONFIG.BATCH_SIZE).map(inject));
+            if (i + CONFIG.BATCH_SIZE < blocks.length) {
+                await new Promise(r => setTimeout(r, CONFIG.BATCH_DELAY));
+            }
         }
     }
 
-    let timer;
-    new MutationObserver(() => {
-        clearTimeout(timer);
-        timer = setTimeout(processAll, 250);
-    }).observe(document.body, { childList: true, subtree: true });
+    function init() {
+        let timer;
+        new MutationObserver(() => {
+            clearTimeout(timer);
+            timer = setTimeout(processAll, CONFIG.OBSERVER_DELAY);
+        }).observe(document.body, { childList: true, subtree: true });
 
-    processAll();
+        processAll();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
 })();
