@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         AOTY Score Hider
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      2.7
 // @description  Toggle visibility of scores on Album of the Year
 // @author       Hugo Sibony
 // @match        https://www.albumoftheyear.org/*
 // @match        https://albumoftheyear.org/*
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @run-at       document-end
+// @grant        GM_addStyle
+// @run-at       document-start
 // @updateURL    https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js
 // @downloadURL  https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js
 // ==/UserScript==
@@ -17,7 +18,6 @@
     'use strict';
 
     const CONFIG = {
-        OBSERVER_DELAY: 100,
         SELECTORS: [
             '.albumUserScoreBox',
             '.albumCriticScoreBox',
@@ -45,7 +45,15 @@
         ]
     };
 
+    // Inject CSS that hides scores when html has the class (prevents flash on page load)
+    GM_addStyle(`html.aoty-hide-scores ${CONFIG.SELECTORS.join(', html.aoty-hide-scores ')} { display: none !important; }`);
+
     let isHidden = GM_getValue('scoresHidden', false);
+
+    // Apply class immediately if scores should be hidden
+    if (isHidden) {
+        document.documentElement.classList.add('aoty-hide-scores');
+    }
 
     function getOrCreateContainer() {
         let container = document.querySelector('.aoty-scripts-container');
@@ -140,10 +148,7 @@
     }
 
     function updateScoreVisibility() {
-        const display = isHidden ? 'none' : '';
-        CONFIG.SELECTORS.forEach(selector => {
-            document.querySelectorAll(selector).forEach(el => el.style.display = display);
-        });
+        document.documentElement.classList.toggle('aoty-hide-scores', isHidden);
     }
 
     function handleToggle(event) {
@@ -160,7 +165,6 @@
     function init() {
         addStyles();
         getOrCreateContainer().appendChild(createButton());
-        updateScoreVisibility();
     }
 
     if (document.readyState === 'loading') {
@@ -168,11 +172,5 @@
     } else {
         init();
     }
-
-    let timeout;
-    new MutationObserver(() => {
-        clearTimeout(timeout);
-        timeout = setTimeout(updateScoreVisibility, CONFIG.OBSERVER_DELAY);
-    }).observe(document.body, { childList: true, subtree: true });
 
 })();
