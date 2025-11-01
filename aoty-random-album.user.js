@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      1.10
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/user/*
@@ -134,7 +134,7 @@
         link.className = 'aoty-random-link';
 
         const div = document.createElement('div');
-        div.textContent = 'Surprise Me';
+        div.textContent = 'Random';
 
         link.appendChild(div);
         link.addEventListener('click', handleRandomClick);

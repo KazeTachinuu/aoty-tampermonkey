@@ -8,7 +8,7 @@ Userscripts for [Album of the Year](https://www.albumoftheyear.org/).
 |--------|---------|------|---------|
 | **Score Hider** | 2.6 | `aoty-score-hider.user.js` | Toggle all score visibility with persistent state |
 | **Personal Score** | 2.2 | `aoty-personal-score.user.js` | Display your ratings on list pages without visiting albums |
-| **Random Picker** | 1.8 | `aoty-random-album.user.js` | Select random albums from any user's ratings |
+| **Random Picker** | 1.10 | `aoty-random-album.user.js` | Select random albums from any user's ratings |
 
 ## Installation
 
