@@ -6,21 +6,17 @@ Userscripts for [Album of the Year](https://www.albumoftheyear.org/).
 
 | Script | Version | File | Purpose |
 |--------|---------|------|---------|
-| **Score Hider** | 2.6 | `aoty-score-hider.user.js` | Toggle all score visibility with persistent state |
-| **Personal Score** | 2.2 | `aoty-personal-score.user.js` | Display your ratings on list pages without visiting albums |
-| **Random Picker** | 1.10 | `aoty-random-album.user.js` | Select random albums from any user's ratings |
+| [**Score Hider**](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js) | 2.6 | `aoty-score-hider.user.js` | Toggle all score visibility with persistent state |
+| [**Personal Score**](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-personal-score.user.js) | 2.2 | `aoty-personal-score.user.js` | Display your ratings on list pages without visiting albums |
+| [**Random Picker**](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js) | 1.10 | `aoty-random-album.user.js` | Select random albums from any user's ratings |
 
 ## Installation
 
 **Prerequisites:** [Tampermonkey](https://www.tampermonkey.net/) extension
 
-**Install from GitHub (recommended):**
-Click any raw `.user.js` file link below - Tampermonkey will auto-install with update support:
-- [Score Hider](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js)
-- [Personal Score](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-personal-score.user.js)
-- [Random Picker](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js)
+**Install:** Click any script name in the table above - Tampermonkey will auto-install with update support.
 
-Scripts will auto-update daily when new versions are pushed to GitHub.
+Scripts auto-update daily when new versions are pushed to GitHub.
 
 **Alternative:** Drag `.user.js` files into browser, or manually paste into Tampermonkey editor.
 
