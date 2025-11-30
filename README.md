@@ -8,7 +8,7 @@ Userscripts for [Album of the Year](https://www.albumoftheyear.org/).
 |--------|---------|------|---------|
 | [**Score Hider**](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-score-hider.user.js) | 2.6 | `aoty-score-hider.user.js` | Toggle all score visibility with persistent state |
 | [**Personal Score**](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-personal-score.user.js) | 2.2 | `aoty-personal-score.user.js` | Display your ratings on list pages without visiting albums |
-| [**Random Picker**](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js) | 1.10 | `aoty-random-album.user.js` | Select random albums from any user's ratings |
+| [**Random Picker**](https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js) | 1.11 | `aoty-random-album.user.js` | Select random albums from any user's ratings |
 
 ## Installation
 
