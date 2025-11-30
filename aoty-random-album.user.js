@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.10
+// @version      1.11
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/user/*
@@ -240,7 +240,12 @@
     function initUserPage() {
         const profileNav = document.querySelector('.profileNav');
         if (profileNav) {
-            profileNav.appendChild(createRandomButton());
+            const lastLink = profileNav.querySelector('a:has(div.last)');
+            if (lastLink) {
+                profileNav.insertBefore(createRandomButton(), lastLink);
+            } else {
+                profileNav.appendChild(createRandomButton());
+            }
         }
     }
 
