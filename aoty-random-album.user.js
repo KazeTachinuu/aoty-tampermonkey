@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.11
+// @version      1.12
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
-// @match        https://*.albumoftheyear.org/user/*
-// @match        https://*.albumoftheyear.org/album/*
+// @match        https://*.albumoftheyear.org/*
 // @grant        none
 // @run-at       document-end
 // @updateURL    https://raw.githubusercontent.com/KazeTachinuu/aoty-tampermonkey/master/aoty-random-album.user.js
@@ -26,6 +25,15 @@
     const isUserProfilePage = () => /^\/user\/[^\/]+/.test(window.location.pathname);
     const isAlbumPage = () => /^\/album\//.test(window.location.pathname);
     const getUsernameFromUrl = () => window.location.pathname.match(/^\/user\/([^\/]+)/)?.[1] || null;
+
+    const getLoggedInUsername = () => {
+        const userMenuLink = document.querySelector('.headerMenu .userDropdownMenu a[href^="/user/"]');
+        if (userMenuLink) {
+            const match = userMenuLink.getAttribute('href').match(/^\/user\/([^\/]+)/);
+            return match ? match[1] : null;
+        }
+        return null;
+    };
 
     const getColorClass = rating => {
         const r = parseInt(rating);
@@ -96,24 +104,25 @@
         return allAlbums;
     }
 
-    async function handleRandomClick(e) {
+    async function handleRandomClick(e, usernameOverride = null) {
         e.preventDefault();
 
-        const username = getUsernameFromUrl();
-        if (!username) return;
+        const username = usernameOverride || getUsernameFromUrl();
+        if (!username) {
+            alert('Could not determine username.');
+            return;
+        }
 
         const link = e.currentTarget;
-        const div = link.querySelector('div');
-        if (!div) return;
-
-        const originalText = div.textContent;
-        div.textContent = 'Loading...';
+        const textEl = link.querySelector('div') || link;
+        const originalText = textEl.textContent;
+        textEl.textContent = 'Loading...';
 
         const albums = await getAllRatedAlbums(username);
 
         if (albums.length === 0) {
             alert('No rated albums found for this user.');
-            div.textContent = originalText;
+            textEl.textContent = originalText;
             return;
         }
 
@@ -139,6 +148,15 @@
         link.appendChild(div);
         link.addEventListener('click', handleRandomClick);
 
+        return link;
+    }
+
+    function createDropdownRandomLink(username) {
+        const link = document.createElement('a');
+        link.href = '#';
+        link.className = 'aoty-random-dropdown-link';
+        link.textContent = 'Random Album';
+        link.addEventListener('click', (e) => handleRandomClick(e, username));
         return link;
     }
 
@@ -207,6 +225,19 @@
             }
             .aoty-random-link { text-decoration: none; }
             .aoty-random-link div { cursor: pointer; }
+            .aoty-random-dropdown-link {
+                display: block;
+                padding: 8px 15px;
+                color: inherit;
+                text-decoration: none;
+                cursor: pointer;
+            }
+            .aoty-random-dropdown-link:hover {
+                background: rgba(0, 0, 0, 0.05);
+            }
+            body.dark .aoty-random-dropdown-link:hover {
+                background: rgba(255, 255, 255, 0.05);
+            }
             .aoty-random-banner {
                 position: fixed;
                 top: 80px;
@@ -253,8 +284,22 @@
         showRatingBanner();
     }
 
+    function initDropdownMenu() {
+        const username = getLoggedInUsername();
+        if (!username) return;
+
+        const dropdownMenu = document.querySelector('.headerMenu .userDropdownMenu');
+        if (!dropdownMenu) return;
+
+        if (dropdownMenu.querySelector('.aoty-random-dropdown-link')) return;
+
+        const randomLink = createDropdownRandomLink(username);
+        dropdownMenu.appendChild(randomLink);
+    }
+
     function init() {
         addStyles();
+        initDropdownMenu();
 
         if (isUserProfilePage()) {
             initUserPage();
