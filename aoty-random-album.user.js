@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.13
+// @version      1.14
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/*
@@ -27,55 +27,18 @@
     const getUsernameFromUrl = () => window.location.pathname.match(/^\/user\/([^\/]+)/)?.[1] || null;
 
     const getLoggedInUsername = () => {
-        // Try multiple selectors to find the user dropdown menu
-        const selectors = [
-            '.headerMenu .userDropdownMenu a[href^="/user/"]',
-            '.dropdownMenu a[href^="/user/"]',
-            '.dropdown a[href^="/user/"]',
-            'a[href^="/user/"][href$="/"]'
-        ];
-
-        for (const selector of selectors) {
-            const link = document.querySelector(selector);
-            if (link) {
-                const match = link.getAttribute('href').match(/^\/user\/([^\/]+)/);
-                if (match) return match[1];
-            }
+        // AOTY uses .accountLinks for desktop and .userLinks for mobile
+        const profileLink = document.querySelector('.accountLinks a[href^="/user/"], .userLinks a[href^="/user/"]');
+        if (profileLink) {
+            const match = profileLink.getAttribute('href').match(/^\/user\/([^\/]+)/);
+            if (match) return match[1];
         }
         return null;
     };
 
-    const findUserDropdownMenu = () => {
-        // Find the dropdown menu containing Sign Out link (unique to user menu)
-        const signOutLink = document.querySelector('a[href*="sign-out"], a[href*="logout"], a[href*="signout"]');
-        if (signOutLink) {
-            // Walk up to find the parent menu container
-            let parent = signOutLink.parentElement;
-            while (parent && !parent.classList.contains('dropdownMenu') &&
-                   !parent.classList.contains('dropdown') &&
-                   !parent.classList.contains('menu') &&
-                   parent.tagName !== 'NAV' &&
-                   parent.querySelectorAll('a').length < 5) {
-                parent = parent.parentElement;
-            }
-            if (parent && parent.querySelectorAll('a').length >= 5) {
-                return parent;
-            }
-        }
-
-        // Fallback: find dropdown with profile link
-        const profileLink = document.querySelector('a[href^="/user/"][href$="/"]');
-        if (profileLink) {
-            let parent = profileLink.parentElement;
-            while (parent && parent.querySelectorAll('a').length < 5) {
-                parent = parent.parentElement;
-            }
-            if (parent && parent.querySelectorAll('a').length >= 5) {
-                return parent;
-            }
-        }
-
-        return null;
+    const findUserDropdownMenus = () => {
+        // Return both desktop (.accountLinks) and mobile (.userLinks) menus
+        return document.querySelectorAll('.accountLinks, .userLinks');
     };
 
     const getColorClass = rating => {
@@ -191,15 +154,6 @@
         link.appendChild(div);
         link.addEventListener('click', handleRandomClick);
 
-        return link;
-    }
-
-    function createDropdownRandomLink(username) {
-        const link = document.createElement('a');
-        link.href = '#';
-        link.className = 'aoty-random-dropdown-link';
-        link.textContent = 'Random Album';
-        link.addEventListener('click', (e) => handleRandomClick(e, username));
         return link;
     }
 
@@ -331,24 +285,29 @@
         const username = getLoggedInUsername();
         if (!username) return;
 
-        const dropdownMenu = findUserDropdownMenu();
-        if (!dropdownMenu) return;
+        const dropdownMenus = findUserDropdownMenus();
+        if (!dropdownMenus.length) return;
 
-        if (dropdownMenu.querySelector('.aoty-random-dropdown-link')) return;
+        dropdownMenus.forEach(menu => {
+            if (menu.querySelector('.aoty-random-dropdown-link')) return;
 
-        // Find a good insertion point (before Settings or Sign Out)
-        const settingsLink = dropdownMenu.querySelector('a[href*="settings"]');
-        const signOutLink = dropdownMenu.querySelector('a[href*="sign-out"], a[href*="logout"], a[href*="signout"]');
+            // Create wrapper div like other menu items
+            const wrapper = document.createElement('div');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.className = 'aoty-random-dropdown-link';
+            link.innerHTML = '<i class="fas fa-random"></i>Random Album';
+            link.addEventListener('click', (e) => handleRandomClick(e, username));
+            wrapper.appendChild(link);
 
-        const randomLink = createDropdownRandomLink(username);
-
-        if (settingsLink) {
-            settingsLink.parentElement.insertBefore(randomLink, settingsLink);
-        } else if (signOutLink) {
-            signOutLink.parentElement.insertBefore(randomLink, signOutLink);
-        } else {
-            dropdownMenu.appendChild(randomLink);
-        }
+            // Insert before Settings (a[href*="edit.php"]) or at the end
+            const settingsLink = menu.querySelector('a[href*="edit.php"]');
+            if (settingsLink && settingsLink.parentElement) {
+                menu.insertBefore(wrapper, settingsLink.parentElement);
+            } else {
+                menu.appendChild(wrapper);
+            }
+        });
     }
 
     function init() {
