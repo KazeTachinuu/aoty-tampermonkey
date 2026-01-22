@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.12
+// @version      1.13
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/*
@@ -27,11 +27,54 @@
     const getUsernameFromUrl = () => window.location.pathname.match(/^\/user\/([^\/]+)/)?.[1] || null;
 
     const getLoggedInUsername = () => {
-        const userMenuLink = document.querySelector('.headerMenu .userDropdownMenu a[href^="/user/"]');
-        if (userMenuLink) {
-            const match = userMenuLink.getAttribute('href').match(/^\/user\/([^\/]+)/);
-            return match ? match[1] : null;
+        // Try multiple selectors to find the user dropdown menu
+        const selectors = [
+            '.headerMenu .userDropdownMenu a[href^="/user/"]',
+            '.dropdownMenu a[href^="/user/"]',
+            '.dropdown a[href^="/user/"]',
+            'a[href^="/user/"][href$="/"]'
+        ];
+
+        for (const selector of selectors) {
+            const link = document.querySelector(selector);
+            if (link) {
+                const match = link.getAttribute('href').match(/^\/user\/([^\/]+)/);
+                if (match) return match[1];
+            }
         }
+        return null;
+    };
+
+    const findUserDropdownMenu = () => {
+        // Find the dropdown menu containing Sign Out link (unique to user menu)
+        const signOutLink = document.querySelector('a[href*="sign-out"], a[href*="logout"], a[href*="signout"]');
+        if (signOutLink) {
+            // Walk up to find the parent menu container
+            let parent = signOutLink.parentElement;
+            while (parent && !parent.classList.contains('dropdownMenu') &&
+                   !parent.classList.contains('dropdown') &&
+                   !parent.classList.contains('menu') &&
+                   parent.tagName !== 'NAV' &&
+                   parent.querySelectorAll('a').length < 5) {
+                parent = parent.parentElement;
+            }
+            if (parent && parent.querySelectorAll('a').length >= 5) {
+                return parent;
+            }
+        }
+
+        // Fallback: find dropdown with profile link
+        const profileLink = document.querySelector('a[href^="/user/"][href$="/"]');
+        if (profileLink) {
+            let parent = profileLink.parentElement;
+            while (parent && parent.querySelectorAll('a').length < 5) {
+                parent = parent.parentElement;
+            }
+            if (parent && parent.querySelectorAll('a').length >= 5) {
+                return parent;
+            }
+        }
+
         return null;
     };
 
@@ -288,13 +331,24 @@
         const username = getLoggedInUsername();
         if (!username) return;
 
-        const dropdownMenu = document.querySelector('.headerMenu .userDropdownMenu');
+        const dropdownMenu = findUserDropdownMenu();
         if (!dropdownMenu) return;
 
         if (dropdownMenu.querySelector('.aoty-random-dropdown-link')) return;
 
+        // Find a good insertion point (before Settings or Sign Out)
+        const settingsLink = dropdownMenu.querySelector('a[href*="settings"]');
+        const signOutLink = dropdownMenu.querySelector('a[href*="sign-out"], a[href*="logout"], a[href*="signout"]');
+
         const randomLink = createDropdownRandomLink(username);
-        dropdownMenu.appendChild(randomLink);
+
+        if (settingsLink) {
+            settingsLink.parentElement.insertBefore(randomLink, settingsLink);
+        } else if (signOutLink) {
+            signOutLink.parentElement.insertBefore(randomLink, signOutLink);
+        } else {
+            dropdownMenu.appendChild(randomLink);
+        }
     }
 
     function init() {
