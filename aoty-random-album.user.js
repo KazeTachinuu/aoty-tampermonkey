@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AOTY Random Album Picker
 // @namespace    http://tampermonkey.net/
-// @version      1.14
+// @version      1.15
 // @description  Pick a random album from any user's rated albums on AOTY
 // @author       Hugo Sibony
 // @match        https://*.albumoftheyear.org/*
@@ -84,7 +84,7 @@
             while (page <= CONFIG.MAX_PAGES) {
                 const url = page === 1
                     ? `/user/${username}/ratings/`
-                    : `/user/${username}/ratings/?page=${page}`;
+                    : `/user/${username}/ratings/${page}/`;
 
                 const response = await fetch(url);
                 if (!response.ok) break;
@@ -97,8 +97,10 @@
 
                 allAlbums.push(...pageAlbums);
 
-                const hasNextPage = doc.querySelector('.pagination a[rel="next"]') ||
-                                  doc.querySelector('.pagination .next:not(.disabled)');
+                const pageLinks = doc.querySelectorAll('.pageSelectRow a .pageSelectSmall');
+                const hasNextPage = Array.from(pageLinks).some(el => {
+                    return parseInt(el.textContent.trim()) > page;
+                });
 
                 if (!hasNextPage) break;
                 page++;
